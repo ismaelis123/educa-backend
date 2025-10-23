@@ -9,7 +9,7 @@ const generateToken = (id) => {
 // Registrar usuario
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, role, vendorInfo } = req.body;
 
     // Verificar si el usuario existe
     const userExists = await User.findOne({ email });
@@ -25,7 +25,9 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      phone
+      phone,
+      role: role || 'student',
+      vendorInfo: vendorInfo || {}
     });
 
     if (user) {
@@ -37,6 +39,7 @@ exports.register = async (req, res) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          vendorInfo: user.vendorInfo,
           token: generateToken(user._id)
         }
       });
@@ -67,6 +70,7 @@ exports.login = async (req, res) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          vendorInfo: user.vendorInfo,
           purchasedCourses: user.purchasedCourses,
           token: generateToken(user._id)
         }
@@ -90,7 +94,7 @@ exports.login = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .populate('purchasedCourses', 'title description image');
+      .populate('purchasedCourses', 'title description image category price');
     
     res.json({
       success: true,

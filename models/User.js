@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'admin'],
+    enum: ['student', 'vendor', 'admin'],
     default: 'student'
   },
   phone: {
@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  vendorInfo: {
+    businessName: String,
+    description: String,
+    website: String
   }
 }, {
   timestamps: true

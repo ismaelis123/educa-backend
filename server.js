@@ -24,6 +24,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/courses', require('./routes/courses'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/content', require('./routes/content'));
+app.use('/api/vendor', require('./routes/vendor'));
 
 // Ruta de prueba
 app.get('/api', (req, res) => {

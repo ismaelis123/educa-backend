@@ -12,7 +12,7 @@ const contentSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['video', 'pdf', 'text', 'quiz', 'link'],
+    enum: ['video', 'pdf', 'text', 'quiz', 'link', 'image'],
     required: true
   },
   contentUrl: {
@@ -32,6 +32,10 @@ const contentSchema = new mongoose.Schema({
     default: 0
   },
   description: {
+    type: String,
+    default: ''
+  },
+  fileSize: {
     type: String,
     default: ''
   }

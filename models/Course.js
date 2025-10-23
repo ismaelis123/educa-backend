@@ -41,6 +41,11 @@ const courseSchema = new mongoose.Schema({
     type: String,
     default: 'Admin'
   },
+  vendor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   whatsappMessage: {
     type: String,
     required: true

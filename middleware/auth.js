@@ -49,4 +49,21 @@ const adminAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth, adminAuth };
+const vendorAuth = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'vendor' && req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Acceso denegado. Se requiere rol de vendedor o admin.' 
+      });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error en autenticación de vendedor.' 
+    });
+  }
+};
+
+module.exports = { auth, adminAuth, vendorAuth };

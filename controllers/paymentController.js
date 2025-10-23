@@ -16,6 +16,23 @@ exports.initiatePayment = async (req, res) => {
       });
     }
 
+    // Si el curso es gratis, asignarlo directamente
+    if (course.isFree) {
+      const user = await User.findById(userId);
+      if (!user.purchasedCourses.includes(courseId)) {
+        user.purchasedCourses.push(courseId);
+        await user.save();
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          message: 'Curso gratis asignado exitosamente',
+          course: course
+        }
+      });
+    }
+
     // Verificar si ya tiene el curso
     const user = await User.findById(userId);
     if (user.purchasedCourses.includes(courseId)) {
@@ -39,7 +56,7 @@ Precio: $${course.price}
 Mi número: ${user.phone}
 Transaction ID: ${payment.transactionId}`;
 
-    const whatsappUrl = `https://wa.me/506TU_NUMERO?text=${encodeURIComponent(whatsappMessage)}`;
+    const whatsappUrl = `https://wa.me/50585202908?text=${encodeURIComponent(whatsappMessage)}`;
 
     res.json({
       success: true,
