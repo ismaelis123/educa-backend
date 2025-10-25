@@ -1,40 +1,36 @@
 const Content = require('../models/Content');
 const Course = require('../models/Course');
 
-// Crear contenido para un curso
+// Crear contenido
 exports.createContent = async (req, res) => {
   try {
     const { courseId } = req.params;
     const { title, type, description, duration, isFree, order } = req.body;
 
-    // Verificar que el curso existe y pertenece al vendedor
-    const course = await Course.findById(courseId);
+    const course = await Course.findOne({ _id: courseId, vendor: req.user._id });
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Curso no encontrado'
-      });
-    }
-
-    // Verificar que el usuario es el vendedor o admin
-    if (course.vendor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'No tienes permiso para agregar contenido a este curso'
+        message: 'Curso no encontrado o no tienes permisos'
       });
     }
 
     let contentUrl = '';
+    let fileSize = '';
 
-    // Manejar diferentes tipos de contenido
-    if (type === 'video' && req.file) {
+    if (type === 'video' || type === 'pdf' || type === 'image') {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'Archivo requerido para este tipo de contenido'
+        });
+      }
       contentUrl = `/uploads/${req.file.filename}`;
-    } else if (type === 'pdf' && req.file) {
-      contentUrl = `/uploads/${req.file.filename}`;
-    } else if (type === 'image' && req.file) {
-      contentUrl = `/uploads/${req.file.filename}`;
-    } else if (type === 'text' || type === 'link') {
+      fileSize = req.file.size ? `${Math.round(req.file.size / 1024 / 1024)}MB` : '';
+    } else if (type === 'link') {
       contentUrl = req.body.contentUrl || '';
+    } else if (type === 'text') {
+      contentUrl = req.body.content || '';
     }
 
     const content = await Content.create({
@@ -42,16 +38,17 @@ exports.createContent = async (req, res) => {
       title,
       type,
       contentUrl,
-      description,
       duration,
       isFree: isFree || false,
       order: order || 0,
-      fileSize: req.file ? `${(req.file.size / (1024 * 1024)).toFixed(2)} MB` : ''
+      description,
+      fileSize
     });
 
     res.status(201).json({
       success: true,
-      data: content
+      data: content,
+      message: 'Contenido creado exitosamente'
     });
   } catch (error) {
     res.status(500).json({
@@ -62,47 +59,44 @@ exports.createContent = async (req, res) => {
   }
 };
 
-// Obtener contenido de un curso
+// Obtener contenido del curso
 exports.getCourseContent = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const userId = req.user._id;
-
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Curso no encontrado'
-      });
-    }
-
-    // Verificar acceso al contenido
-    const user = req.user;
-    const hasAccess = user.purchasedCourses.includes(courseId) || 
-                     course.isFree ||
-                     user.role === 'admin' ||
-                     course.vendor.toString() === userId.toString();
 
     const content = await Content.find({ course: courseId })
       .sort({ order: 1, createdAt: 1 });
 
-    // Filtrar contenido según acceso
-    const filteredContent = hasAccess ? 
-      content : 
-      content.filter(item => item.isFree);
+    res.json({
+      success: true,
+      data: content,
+      count: content.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error obteniendo contenido',
+      error: error.message
+    });
+  }
+};
+
+// Obtener contenido por ID
+exports.getContentById = async (req, res) => {
+  try {
+    const content = await Content.findById(req.params.contentId)
+      .populate('course');
+
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contenido no encontrado'
+      });
+    }
 
     res.json({
       success: true,
-      data: {
-        content: filteredContent,
-        hasFullAccess: hasAccess,
-        course: {
-          title: course.title,
-          isFree: course.isFree,
-          price: course.price,
-          instructor: course.instructor
-        }
-      }
+      data: content
     });
   } catch (error) {
     res.status(500).json({
@@ -129,10 +123,11 @@ exports.updateContent = async (req, res) => {
     }
 
     // Verificar permisos
-    if (content.course.vendor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    const course = await Course.findOne({ _id: content.course._id, vendor: req.user._id });
+    if (!course) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permiso para editar este contenido'
+        message: 'No tienes permisos para editar este contenido'
       });
     }
 
@@ -144,7 +139,8 @@ exports.updateContent = async (req, res) => {
 
     res.json({
       success: true,
-      data: updatedContent
+      data: updatedContent,
+      message: 'Contenido actualizado exitosamente'
     });
   } catch (error) {
     res.status(500).json({
@@ -170,10 +166,11 @@ exports.deleteContent = async (req, res) => {
     }
 
     // Verificar permisos
-    if (content.course.vendor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    const course = await Course.findOne({ _id: content.course._id, vendor: req.user._id });
+    if (!course) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permiso para eliminar este contenido'
+        message: 'No tienes permisos para eliminar este contenido'
       });
     }
 

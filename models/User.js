@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'
   }],
+   savedCourses: [{  // ← NUEVO CAMPO PARA GUARDAR CURSOS
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
+  }],
   isActive: {
     type: Boolean,
     default: true

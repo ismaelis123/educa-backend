@@ -65,8 +65,7 @@ Transaction ID: ${payment.transactionId}`;
         whatsappUrl,
         course: {
           title: course.title,
-          price: course.price,
-          whatsappMessage: course.whatsappMessage
+          price: course.price
         }
       }
     });
@@ -79,7 +78,7 @@ Transaction ID: ${payment.transactionId}`;
   }
 };
 
-// Verificar pago (para que tú marques como aprobado)
+// Verificar pago
 exports.verifyPayment = async (req, res) => {
   try {
     const { transactionId } = req.body;
@@ -108,7 +107,7 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
-// Aprobar pago (tú ejecutas esto después del pago por WhatsApp)
+// Aprobar pago
 exports.approvePayment = async (req, res) => {
   try {
     const { transactionId } = req.body;

@@ -1,6 +1,4 @@
 const Course = require('../models/Course');
-const Content = require('../models/Content');
-const User = require('../models/User');
 
 // Obtener todos los cursos
 exports.getAllCourses = async (req, res) => {
@@ -19,7 +17,7 @@ exports.getAllCourses = async (req, res) => {
     }
 
     const courses = await Course.find(filter)
-      .populate('vendor', 'name email vendorInfo')
+      .populate('vendor', 'name email')
       .sort({ createdAt: -1 });
     
     res.json({
@@ -40,7 +38,7 @@ exports.getAllCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate('vendor', 'name email vendorInfo');
+      .populate('vendor', 'name email');
     
     if (!course) {
       return res.status(404).json({
@@ -62,19 +60,18 @@ exports.getCourseById = async (req, res) => {
   }
 };
 
-// Crear curso (vendor o admin)
+// Crear curso
 exports.createCourse = async (req, res) => {
   try {
     const courseData = { 
       ...req.body,
-      vendor: req.user._id // Asignar el vendedor automáticamente
+      vendor: req.user._id
     };
     
     if (req.file) {
       courseData.image = `/uploads/${req.file.filename}`;
     }
 
-    // Si el usuario es student, no puede crear cursos
     if (req.user.role === 'student') {
       return res.status(403).json({
         success: false,
@@ -112,6 +109,74 @@ exports.getVendorCourses = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error obteniendo cursos del vendedor',
+      error: error.message
+    });
+  }
+};
+
+// Actualizar curso
+exports.updateCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const course = await Course.findOne({ _id: id, vendor: req.user._id });
+    
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Curso no encontrado o no tienes permisos'
+      });
+    }
+
+    if (req.file) {
+      updates.image = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedCourse = await Course.findByIdAndUpdate(
+      id, 
+      updates, 
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      data: updatedCourse,
+      message: 'Curso actualizado exitosamente'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error actualizando curso',
+      error: error.message
+    });
+  }
+};
+
+// Eliminar curso
+exports.deleteCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findOne({ _id: id, vendor: req.user._id });
+    
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Curso no encontrado o no tienes permisos'
+      });
+    }
+
+    await Course.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: 'Curso eliminado exitosamente'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error eliminando curso',
       error: error.message
     });
   }

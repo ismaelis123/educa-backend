@@ -26,6 +26,7 @@ app.use('/api/courses', require('./routes/courses'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/content', require('./routes/content'));
 app.use('/api/vendor', require('./routes/vendor'));
+app.use('/api/user', require('./routes/user'));
 
 // Ruta de prueba
 app.get('/api', (req, res) => {

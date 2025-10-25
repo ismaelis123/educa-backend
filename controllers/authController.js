@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// Generar JWT
+// Generar token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
@@ -9,9 +9,9 @@ const generateToken = (id) => {
 // Registrar usuario
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone, role, vendorInfo } = req.body;
+    const { name, email, password, phone, role } = req.body;
 
-    // Verificar si el usuario existe
+    // Verificar si el usuario ya existe
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
@@ -26,41 +26,37 @@ exports.register = async (req, res) => {
       email,
       password,
       phone,
-      role: role || 'student',
-      vendorInfo: vendorInfo || {}
+      role: role || 'student'
     });
 
-    if (user) {
-      res.status(201).json({
-        success: true,
-        data: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          vendorInfo: user.vendorInfo,
-          token: generateToken(user._id)
-        }
-      });
-    }
+    res.status(201).json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        token: generateToken(user._id)
+      },
+      message: 'Usuario registrado exitosamente'
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error en el servidor',
+      message: 'Error registrando usuario',
       error: error.message
     });
   }
 };
 
-// Login de usuario
+// Login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Verificar email y password
+    // Verificar usuario y password
     const user = await User.findOne({ email });
-
     if (user && (await user.comparePassword(password))) {
       res.json({
         success: true,
@@ -70,10 +66,9 @@ exports.login = async (req, res) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
-          vendorInfo: user.vendorInfo,
-          purchasedCourses: user.purchasedCourses,
           token: generateToken(user._id)
-        }
+        },
+        message: 'Login exitoso'
       });
     } else {
       res.status(401).json({
@@ -84,21 +79,18 @@ exports.login = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error en el servidor',
+      message: 'Error en login',
       error: error.message
     });
   }
 };
 
-// Obtener perfil de usuario
+// Obtener perfil
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate('purchasedCourses', 'title description image category price');
-    
     res.json({
       success: true,
-      data: user
+      data: req.user
     });
   } catch (error) {
     res.status(500).json({

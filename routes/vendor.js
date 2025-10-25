@@ -4,7 +4,6 @@ const Course = require('../models/Course');
 const Payment = require('../models/Payment');
 const router = express.Router();
 
-// Obtener estadísticas del vendedor
 router.get('/stats', auth, vendorAuth, async (req, res) => {
   try {
     const totalCourses = await Course.countDocuments({ vendor: req.user._id });
@@ -17,7 +16,6 @@ router.get('/stats', auth, vendorAuth, async (req, res) => {
       isFree: false 
     });
 
-    // Calcular ingresos
     const payments = await Payment.find({ 
       status: 'completed'
     }).populate('course');
